@@ -13,11 +13,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case string:
-    // TODO: remove
+		// TODO: remove
 		m.logLines.Push(msg)
 	case extract.Data:
 		m.logLines.Push(msg.LogLine)
-    m.values = append(m.values, msg.Value)
+		m.values = append(m.values, msg.Value)
 	}
 
 	return m, nil
