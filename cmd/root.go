@@ -21,8 +21,14 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		extractorType, err := cmd.Flags().GetString("type")
+		if err != nil {
+			slog.Error("Error parsing type flag", slog.Any("error", err))
+			os.Exit(1)
+		}
+
 		p := tea.NewProgram(presentation.InitialModel)
-		go readLog(p)
+		go readLog(p, extractorType)
 		if _, err := p.Run(); err != nil {
 			slog.Error("Error in reading log", slog.Any("error", err))
 			os.Exit(1)
@@ -46,14 +52,20 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().StringP("type", "t", "", "Log extractor type")
 }
 
-func readLog(p *tea.Program) {
+func readLog(p *tea.Program, extractorType string) {
+	extractor, err := extract.GetExtractor(extractorType)
+	if err != nil {
+		slog.Info("Error getting extractor for key "+extractorType, slog.Any("errro", err))
+		os.Exit(1)
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := scanner.Text()
-		data, _ := extract.NewPingExtrator().Extract(line)
+		data, _ := extractor.Extract(line)
 		p.Send(data)
 	}
 
